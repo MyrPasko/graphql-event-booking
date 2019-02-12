@@ -12,6 +12,33 @@ const app = express();
 
 app.use(bodyParser.json());
 
+const events = (eventIds) => {
+    return Event.find({_id: {$in: eventIds}})
+        .then((events) => {
+            console.log(events);
+            return events.map((event) => {
+                return {
+                    ...event._doc,
+                    _id: event.id,
+                    creator: user.bind(this.event.creator)
+                }
+            })
+        })
+        .catch((err) => {
+            console.log(err);
+        });Ю
+};
+
+const user = (userId) => {
+    return User.findById(userId)
+        .then((user) => {
+            return {...user._doc, _id: user.id, createdEvents: events.bind(this, user._doc.createdEvents)}
+        })
+        .catch((err) => {
+
+        });
+};
+
 /** [String!]! Not return null. It can be empty object, but not null (check it in the DOCS)
  * Something! - This must never be null!
  * 'events' can take arguments too.
@@ -28,12 +55,14 @@ app.use('/graphql', graphqlHttp({
             description: String!
             price: Float!
             date: String!
+            creator: User!
         }
         
         type User {
             _id: ID!
             email: String!
             password: String
+            createdEvents: [Event!]
         }
         
         input EventInput {
@@ -73,7 +102,8 @@ app.use('/graphql', graphqlHttp({
                         console.log({...event._doc});
                         return {
                             ...event._doc,
-                            _id: event._doc._id.toString()
+                            _id: event._doc._id.toString(),
+                            creator: user.bind(this, event._doc.creator)
                         };
                     })
                 })
@@ -96,17 +126,32 @@ app.use('/graphql', graphqlHttp({
                 title: title,
                 description: description,
                 price: +price,
-                date: new Date(date)
+                date: new Date(date),
+                creator: '5c6296dab67b8f4010d7a063'  // there must be ObjectId, but Mongoose can convert it automatically to string
             });
+
+            let createdEvent;
 
             return event
                 .save()                                // new item must be return
                 .then((result) => {
-                    console.log(result);
-                    return {
+                    createdEvent = {
                         ...result._doc,
-                        _id: result._doc._id.toString()
+                        _id: result._doc._id.toString(),
+                      creator: user.bind(this. result._doc.creator)
                     };
+                    console.log(result);
+                    return User.findById('5c6296dab67b8f4010d7a063');
+                })
+                .then((user) => {
+                    if (!user) {
+                        throw new Error('User was not found.')
+                    }
+                    user.createdEvents.push(event);
+                    return user.save();
+                })
+                .then((result) => {
+                    return createdEvent;
                 })
                 .catch((err) => {
                     console.log(err);
