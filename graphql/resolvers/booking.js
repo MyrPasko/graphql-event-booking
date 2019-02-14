@@ -24,7 +24,7 @@ module.exports = {                     // all schemas, matching by names
         }
         const fetchedEvent = await Event.findOne({ _id: args.eventId });
         const booking = new Booking({
-            user: '5c6296dab67b8f4010d7a063',
+            user: req.userId,
             event: fetchedEvent
         });
         const result = await booking.save();

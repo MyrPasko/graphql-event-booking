@@ -27,7 +27,7 @@ module.exports = {                     // all schemas, matching by names
             description: description,
             price: +price,
             date: new Date(date),
-            creator: '5c6296dab67b8f4010d7a063'  // there must be ObjectId, but Mongoose can convert it automatically to string
+            creator: req.userId  // there must be ObjectId, but Mongoose can convert it automatically to string
         });
 
         let createdEvent;
@@ -37,7 +37,7 @@ module.exports = {                     // all schemas, matching by names
 
             createdEvent = transformEvent(result);
 
-            const creator = await User.findById('5c6296dab67b8f4010d7a063');
+            const creator = await User.findById(req.userId);
 
             if (!creator) {
                 throw new Error('User was not found.')
