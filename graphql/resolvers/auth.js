@@ -1,8 +1,9 @@
 const bcrypt = require('bcryptjs');
 const User = require('../../models/user');
+const jwt = require('jsonwebtoken');
 
 
-module.exports = {                     // all schemas, matching by names
+module.exports = {
     /** User resolvers */
     createUser: async (args) => {
         const {email, password} = args.userInput;  // there is nested object of type EventInput with the name "eventInput"
@@ -33,4 +34,20 @@ module.exports = {                     // all schemas, matching by names
             throw error;
         }
     },
+
+    login: async ({email, password}) => {
+        const user = await User.findOne({email: email});
+        if (!user) {
+            throw new Error('User does not exist!')
+        }
+        const isEqual = await bcrypt.compare(password, user.password);
+        if (!isEqual) {
+            throw new Error('Password is incorrect.')
+        }
+        const token = jwt.sign({   // we can use token to store some data
+                userID: user.id,
+                email: user.email
+            }, 'stringforchecking', {expiresIn: '1h'});    // second argument is required (for access and validation)
+        return {userId: user.id, token: token, tokenExpiration: 1}
+    }
 };

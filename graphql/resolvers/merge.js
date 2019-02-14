@@ -1,6 +1,6 @@
 const User = require('../../models/user');
 const Event = require('../../models/event');
-const {dateToString} = require('../../helpers/date');
+const { dateToString } = require('../../helpers/date');
 
 const transformEvent = (event) => {
     return {
@@ -45,10 +45,7 @@ const singleEvent = async eventId => {
 
 const user = async userId => {
     try {
-        console.log("FUUUUUUUU", userId);
         const user = await User.findById(userId);
-
-        console.log("User: ", user);
         return {
             ...user._doc,
             _id: user.id,

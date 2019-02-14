@@ -16,7 +16,11 @@ module.exports = {                     // all schemas, matching by names
         }
     },
 
-    createEvent: async (args) => {
+    createEvent: async (args, req) => {
+        if (!req.isAuth) {
+            throw new Error('Unauthenticated!');
+        }
+            console.log(req.isAuth);
         const {title, description, price, date} = args.eventInput;  // there is nested object of type EventInput with the name "eventInput"
         const event = new Event({
             title: title,

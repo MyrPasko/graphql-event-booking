@@ -6,12 +6,13 @@ const mongoose = require('mongoose');
 const graphQlSchema= require('./graphql/schema/index');
 const graphQlResolvers = require('./graphql/resolvers/index');
 
+const isAuth = require('./middleware/is-auth');
 
 const app = express();
 
 app.use(bodyParser.json());
 
-
+app.use(isAuth);
 
 /** [String!]! Not return null. It can be empty object, but not null (check it in the DOCS)
  * Something! - This must never be null!
