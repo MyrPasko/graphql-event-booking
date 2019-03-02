@@ -4,7 +4,6 @@ import './MainNavigation.css';
 
 import AuthContext from '../../context/auth-context';
 
-
 const mainNavigation = (props) => {
     return (
         <AuthContext.Consumer>
