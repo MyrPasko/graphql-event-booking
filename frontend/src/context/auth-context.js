@@ -6,5 +6,4 @@ export default React.createContext({
     checking: null,
     login: () => {},
     logout: () => {},
-    showThis: () => {},
 })

@@ -1,21 +1,44 @@
 import React, {Component} from 'react';
-import AuthContext from '../context/auth-context';
+import Modal from "../components/Modal/Modal";
+import Backdrop from "../components/Backdrop/Backdrop";
 
 
 class EventsPage extends Component {
-    static contextType = AuthContext;
-
-    showChecking = () => {
-        console.log("Checking: ", this.context.checking);
+    state = {
+        creating: false
     };
+
+    startCreateEventHandler = () => {
+        this.setState({creating: true});
+    };
+
+    modalConfirmHandler = () => {
+        this.setState({creating: false});
+    };
+
+    modalCancelHandler = () => {
+        this.setState({creating: false});
+    };
+
 
     render() {
         return (
-            <div>
-                <h1>The Events page</h1>
-                <h1>{this.context.checking}</h1>
-                <button onClick={this.context.showThis}>Show this!</button>
-            </div>
+            <>
+                {this.state.creating && <Backdrop />}
+                {this.state.creating && <Modal
+                    title="Add event"
+                    canCancel
+                    canConfirm
+                    onCancel={this.modalCancelHandler}
+                    onConfirm={this.modalConfirmHandler}
+                >
+                    <p>Modal content</p>
+                </Modal>}
+                <div className="events-control">
+                    <p>Share your own Events!</p>
+                    <button className="btn" onClick={this.startCreateEventHandler}>Create Event</button>
+                </div>
+            </>
         );
     }
 }
