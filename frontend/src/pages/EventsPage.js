@@ -1,12 +1,21 @@
 import React, {Component} from 'react';
 import Modal from "../components/Modal/Modal";
 import Backdrop from "../components/Backdrop/Backdrop";
+import AuthContext from "../context/auth-context";
+import './EventsPage.css';
+import EventList from "../components/Events/EventList/EventList";
+import Spinner from "../components/Spinner/Spinner";
 
 
 class EventsPage extends Component {
     state = {
-        creating: false
+        creating: false,
+        events: [],
+        isLoading: false,
+        selectedEvent: null,
     };
+
+    static contextType = AuthContext;
 
     constructor(props) {
         super(props);
@@ -15,6 +24,11 @@ class EventsPage extends Component {
         this.dateElRef = React.createRef();
         this.descriptionElRef = React.createRef();
     }
+
+    componentDidMount() {
+        this.fetchEvents();
+    }
+
 
     startCreateEventHandler = () => {
         this.setState({creating: true});
@@ -28,7 +42,7 @@ class EventsPage extends Component {
         const description = this.descriptionElRef.current.value;
 
         if (title.trim().length === 0 ||
-            price.trim().length === 0 ||
+            price <= 0 ||
             date.trim().length === 0 ||
             description.trim().length === 0) {
             return;
@@ -36,47 +50,172 @@ class EventsPage extends Component {
 
         const event = {title, price, date, description};
         console.log(event);
+
+        const requestBody = {
+            query: `
+                mutation {
+                    createEvent(eventInput: {title: "${title}", description: "${description}", price: ${price}, date: "${date}"}) {
+                       _id
+                       title
+                       description
+                       date
+                       price
+                       creator {
+                           _id
+                           email
+                       }
+                    }
+                }
+            `
+        };
+
+        const token = this.context.token;
+
+        fetch('http://localhost:8000/graphql', {
+            method: 'POST',
+            body: JSON.stringify(requestBody),
+            headers: {
+                "content-Type": 'application/json',
+                "Authorization": `Bearer ${token}`,
+            }
+        })
+            .then((result) => {
+                console.warn(result);
+                if (result.status !== 200 && result.status !== 201) {
+                    throw new Error("Failed!");
+                }
+                return result.json();
+            })
+            .then((resData) => {
+                this.setState((prevState) => {
+                    return {events: [...prevState.events, resData.data.createEvent]};
+                });
+
+            })
+            .catch((error) => {
+                console.error(error);
+            })
     };
 
     modalCancelHandler = () => {
-        this.setState({creating: false});
+        this.setState({creating: false, selectedEvent: null});
     };
 
+    fetchEvents = () => {
+        this.setState({isLoading: true});
+
+        const requestBody = {
+            query: `
+                query {
+                    events {
+                       _id
+                       title
+                       description
+                       date
+                       price
+                       creator {
+                           _id
+                           email
+                       }
+                    }
+                }
+            `
+        };
+
+        fetch('http://localhost:8000/graphql', {
+            method: 'POST',
+            body: JSON.stringify(requestBody),
+            headers: {
+                "content-Type": 'application/json',
+            }
+        })
+            .then((result) => {
+                console.warn(result);
+                if (result.status !== 200 && result.status !== 201) {
+                    throw new Error("Failed!");
+                }
+                return result.json();
+            })
+            .then((resData) => {
+                const {events} = resData.data;
+                this.setState({events: events, isLoading: false});
+            })
+            .catch((error) => {
+                console.error(error);
+                this.setState({isLoading: false});
+            })
+    };
+
+    showDetailHandler = (eventId) => {
+        this.setState((prevState, prevProps) => {
+            const selectedEvent = prevState.events.find(event => event._id === eventId);
+            return {selectedEvent};
+        }, () => {
+            console.log(this.state.selectedEvent);
+        });
+
+    };
+
+    bookEventHandler = () => {
+        console.log("Book event handler is working now!!!");
+    };
 
     render() {
         return (
             <>
-                {this.state.creating && <Backdrop />}
+                {(this.state.creating || this.state.selectedEvent) && <Backdrop />}
                 {this.state.creating && <Modal
                     title="Add event"
                     canCancel
                     canConfirm
                     onCancel={this.modalCancelHandler}
                     onConfirm={this.modalConfirmHandler}
+                    confirmText="Confirm"
                 >
                     <form action="">
                         <div className="form-control">
                             <label htmlFor="title">Title</label>
-                            <input type="text" id="title" ref={this.titleElRef}></input>
+                            <input type="text" id="title" ref={this.titleElRef} />
                         </div>
                         <div className="form-control">
                             <label htmlFor="price">Price</label>
-                            <input type="number" id="price" ref={this.priceElRef}></input>
+                            <input type="number" id="price" ref={this.priceElRef} />
                         </div>
                         <div className="form-control">
                             <label htmlFor="date">Date</label>
-                            <input type="datetime-local" id="date" ref={this.dateElRef}></input>
+                            <input type="datetime-local" id="date" ref={this.dateElRef} />
                         </div>
                         <div className="form-control">
                             <label htmlFor="description">Description</label>
-                            <textarea id="description" rows="4" ref={this.descriptionElRef}></textarea>
+                            <textarea id="description" rows="4" ref={this.descriptionElRef} />
                         </div>
                     </form>
                 </Modal>}
-                <div className="events-control">
+                {this.state.selectedEvent && <Modal
+                    title={this.state.selectedEvent.title}
+                    canCancel
+                    canConfirm
+                    onCancel={this.modalCancelHandler}
+                    onConfirm={this.bookEventHandler}
+                    confirmText="Book"
+                >
+                    <h1>{this.state.selectedEvent.title}</h1>
+                    <h2>$ {this.state.selectedEvent.price} - {new Date(this.state.selectedEvent.date).toLocaleDateString()}</h2>
+                    <p>{this.state.selectedEvent.description}</p>
+                </Modal>}
+                {this.context.token && <div className="events-control">
                     <p>Share your own Events!</p>
                     <button className="btn" onClick={this.startCreateEventHandler}>Create Event</button>
-                </div>
+                </div>}
+                {this.state.isLoading
+                    ?
+                    <Spinner />
+                    :
+                    <EventList
+                        events={this.state.events}
+                        authUserId={this.context.userId}
+                        onViewDetail={this.showDetailHandler}
+                    />}
             </>
         );
     }

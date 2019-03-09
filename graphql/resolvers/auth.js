@@ -28,7 +28,8 @@ module.exports = {
             return {
                 ...result._doc,
                 password: null,
-                _id: result._doc._id.toString()
+                // _id: result._doc._id.toString()
+                _id: result.id
             };
         } catch (error) {
             throw error;
@@ -45,7 +46,7 @@ module.exports = {
             throw new Error('Password is incorrect.')
         }
         const token = jwt.sign({   // we can use token to store some data
-                userID: user.id,
+                userId: user.id,
                 email: user.email
             }, 'stringforchecking', {expiresIn: '1h'});    // second argument is required (for access and validation)
         return {userId: user.id, token: token, tokenExpiration: 1}

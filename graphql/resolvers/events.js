@@ -39,6 +39,8 @@ module.exports = {                     // all schemas, matching by names
 
             const creator = await User.findById(req.userId);
 
+            console.log("Creator: ", creator, req.userId);
+
             if (!creator) {
                 throw new Error('User was not found.')
             }
