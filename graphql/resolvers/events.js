@@ -8,7 +8,7 @@ module.exports = {                     // all schemas, matching by names
         try {
             const events = await Event.find();
             return events.map((event) => {
-                console.log({...event._doc});
+                // console.log({...event._doc});
                 return transformEvent(event);
             })
         } catch (error) {
@@ -20,7 +20,6 @@ module.exports = {                     // all schemas, matching by names
         if (!req.isAuth) {
             throw new Error('Unauthenticated!');
         }
-            console.log(req.isAuth);
         const {title, description, price, date} = args.eventInput;  // there is nested object of type EventInput with the name "eventInput"
         const event = new Event({
             title: title,
@@ -38,8 +37,6 @@ module.exports = {                     // all schemas, matching by names
             createdEvent = transformEvent(result);
 
             const creator = await User.findById(req.userId);
-
-            console.log("Creator: ", creator, req.userId);
 
             if (!creator) {
                 throw new Error('User was not found.')
