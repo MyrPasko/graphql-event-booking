@@ -15,6 +15,8 @@ class EventsPage extends Component {
         selectedEvent: null,
     };
 
+    isActive = true;
+
     static contextType = AuthContext;
 
     constructor(props) {
@@ -138,11 +140,16 @@ class EventsPage extends Component {
             })
             .then((resData) => {
                 const {events} = resData.data;
-                this.setState({events: events, isLoading: false});
+                console.log("Res data: ", resData.data);
+                if (this.isActive) {
+                    this.setState({events, isLoading: false});
+                }
             })
             .catch((error) => {
                 console.error(error);
-                this.setState({isLoading: false});
+                if (this.isActive) {
+                    this.setState({isLoading: false});
+                }
             })
     };
 
@@ -156,9 +163,57 @@ class EventsPage extends Component {
 
     };
 
-    bookEventHandler = () => {
+    bookEventHandler = (eventId) => {
         console.log("Book event handler is working now!!!");
+
+        if (!this.context.token) {
+            this.setState({selectedEvent: null});
+            return;
+        }
+
+        const requestBody = {
+            // string params always in double quotes
+            query: `
+                mutation {
+                    bookEvent(eventId: "${eventId}") {
+                       _id
+                       createdAt
+                       updatedAt
+                    }
+                }
+            `
+        };
+
+        const token = this.context.token;
+
+        fetch('http://localhost:8000/graphql', {
+            method: 'POST',
+            body: JSON.stringify(requestBody),
+            headers: {
+                "content-Type": 'application/json',
+                "Authorization": `Bearer ${token}`,
+            }
+        })
+            .then((result) => {
+                console.warn(result);
+                if (result.status !== 200 && result.status !== 201) {
+                    throw new Error("Failed!");
+                }
+                return result.json();
+            })
+            .then((resData) => {
+                console.log("Bookings is successful.", resData);
+                this.setState({selectedEvent: null});
+            })
+            .catch((error) => {
+                console.error(error);
+                this.setState({selectedEvent: null});
+            })
     };
+
+    componentWillUnmount() {
+        this.isActive = false;
+    }
 
     render() {
         return (
@@ -196,8 +251,8 @@ class EventsPage extends Component {
                     canCancel
                     canConfirm
                     onCancel={this.modalCancelHandler}
-                    onConfirm={this.bookEventHandler}
-                    confirmText="Book"
+                    onConfirm={() => this.bookEventHandler(this.state.selectedEvent._id)}
+                    confirmText={this.context.token ? "Book" : "Confirm"}
                 >
                     <h1>{this.state.selectedEvent.title}</h1>
                     <h2>$ {this.state.selectedEvent.price} - {new Date(this.state.selectedEvent.date).toLocaleDateString()}</h2>
