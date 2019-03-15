@@ -64,10 +64,30 @@ class BookingsPage extends Component {
     deleteBookingHandler = (bookingId) => {
         this.setState({isLoading: true});
 
+        /** Not recommended approach */
+        // const requestBody = {
+        //     query: `
+        //         mutation {
+        //             cancelBooking(bookingId: "${bookingId}") {
+        //                _id
+        //                title
+        //                description
+        //                price
+        //                date
+        //                creator {
+        //                    _id
+        //                    email
+        //                }
+        //             }
+        //         }
+        //     `
+        // };
+
+        /** Recommended approach */
         const requestBody = {
             query: `
-                mutation {
-                    cancelBooking(bookingId: "${bookingId}") {
+                mutation CancelBooking ($id: ID!) {
+                    cancelBooking(bookingId: $id) {
                        _id
                        title
                        description
@@ -79,7 +99,10 @@ class BookingsPage extends Component {
                        }
                     }
                 }
-            `
+            `,
+            variables: {
+                id: bookingId
+            }
         };
 
         const token = this.context.token;
