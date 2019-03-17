@@ -1,20 +1,25 @@
-const DataLoader = require('dataloader');
+const DataLoader = require("dataloader");
 
-const User = require('../../models/user');
-const Event = require('../../models/event');
-const {dateToString} = require('../../helpers/date');
+const User = require("../../models/user");
+const Event = require("../../models/event");
+const {dateToString} = require("../../helpers/date");
 
-const eventLoader = new DataLoader((eventIds) => {
+const eventLoader = new DataLoader(eventIds => {
     return events(eventIds);
 });
 
-const userLoader = new DataLoader((userIds) => {
+const userLoader = new DataLoader(userIds => {
     return User.find({_id: {$in: userIds}});
 });
 
 const events = async eventIds => {
     try {
         const events = await Event.find({_id: {$in: eventIds}});
+        events.sort((a, b) => {                                  // must be sorted by Id to avoid DataLoader bug
+            return (
+                eventIds.indexOf(a._id.toString()) - eventIds.indexOf(b._id.toString())
+            )
+        });
         return events.map(event => {
             return transformEvent(event);
         });
@@ -25,10 +30,10 @@ const events = async eventIds => {
 
 const singleEvent = async eventId => {
     try {
-        // const event = await Event.findById(eventId);               // before using DataLoader
-        const event = await eventLoader.load(eventId.toString());     // we must pass ID to DataLoader as a string
-        // return transformEvent(event);                              // before using DataLoader
-        return event;                                                 // we must avoid of double transforming of event
+        // const event = await Event.findById(eventId);                    // before using DataLoader
+        const event = await eventLoader.load(eventId.toString()); // we must pass ID to DataLoader as a string
+        // return transformEvent(event);                                         // before using DataLoader
+        return event;                                                                      // we must avoid of double transforming of event
     } catch (err) {
         throw err;
     }
@@ -50,7 +55,7 @@ const user = async userId => {
     }
 };
 
-const transformEvent = (event) => {
+const transformEvent = event => {
     return {
         ...event._doc,
         _id: event.id,
@@ -59,7 +64,7 @@ const transformEvent = (event) => {
     };
 };
 
-const transformBooking = (booking) => {
+const transformBooking = booking => {
     return {
         ...booking._doc,
         _id: booking.id,

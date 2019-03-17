@@ -138,7 +138,6 @@ class EventsPage extends Component {
             }
         })
             .then((result) => {
-                console.warn(result);
                 if (result.status !== 200 && result.status !== 201) {
                     throw new Error("Failed!");
                 }
@@ -146,7 +145,6 @@ class EventsPage extends Component {
             })
             .then((resData) => {
                 const {events} = resData.data;
-                console.log("Res data: ", resData.data);
                 if (this.isActive) {
                     this.setState({events, isLoading: false});
                 }
@@ -170,7 +168,6 @@ class EventsPage extends Component {
     };
 
     bookEventHandler = (eventId) => {
-        console.log("Book event handler is working now!!!");
 
         if (!this.context.token) {
             this.setState({selectedEvent: null});

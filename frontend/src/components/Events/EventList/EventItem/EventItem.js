@@ -16,8 +16,6 @@ const eventItem = (props) => {
         onDetail
     } = props;
 
-    console.log({userId, creatorId});
-
     return (
         <li key={eventId} className="events__list-item">
             <div>
